@@ -193,6 +193,7 @@ async function solveWithNoneCap(verifyUrl, siteKey) {
         Authorization: `Bearer ${CAPTCHA_API_KEY}`,
       },
       body: JSON.stringify({
+        type: "hcaptcha",
         sitekey: siteKey,
         url: verifyUrl,
       }),
