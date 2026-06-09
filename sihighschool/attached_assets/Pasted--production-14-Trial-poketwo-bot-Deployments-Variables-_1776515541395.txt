@@ -1,0 +1,146 @@
+
+
+production
+
+14
+
+Trial
+
+
+
+poketwo-bot
+Deployments
+Variables
+Metrics
+Settings
+Unexposed service
+us-west2
+1 Replica
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+History
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+poketwo-bot
+
+Failed
+Apr 18, 2026, 5:58 PM
+Get Help
+DetailsBuildDeployNetwork Flow
+You reached the start of the range
+Apr 18, 2026, 5:53 PM
+ 
+[Region: us-west1]
+INFO No package manager inferred, using npm default
+ 
+ 
+╭─────────────────╮
+│ Railpack 0.23.0 │
+╰─────────────────╯
+ 
+↳ Detected Node
+↳ Using npm package manager
+Packages
+──────────
+node  │  18.20.8  │  package.json > engines > node (>=18)
+ 
+Steps
+──────────
+▸ install
+ 
+▸ build
+$ npm install
+ 
+──────────
+$ node src/index.js
+ 
+ 
+Successfully prepared Railpack plan for build
+ 
+context: 9cxr-J0IY
+
+load build definition from railpack-plan.json
+0ms
+
+install mise packages: node
+2s
+mise node@18.20.8 ✓ installed
+
+install apt packages: libatomic1
+2s
+Get:1 http://deb.debian.org/debian bookworm InRelease [151 kB]
+Get:2 http://deb.debian.org/debian bookworm-updates InRelease [55.4 kB]
+Get:3 http://deb.debian.org/debian-security bookworm-security InRelease [48.0 kB]
+Get:4 http://deb.debian.org/debian bookworm/main amd64 Packages [8792 kB]
+Get:5 http://deb.debian.org/debian bookworm-updates/main amd64 Packages [6924 B]
+Get:6 http://deb.debian.org/debian-security bookworm-security/main amd64 Packages [295 kB]
+Fetched 9348 kB in 1s (8241 kB/s)
+Reading package lists...
+Reading package lists...
+Reading state information...
+The following NEW packages will be installed:
+0 upgraded, 1 newly installed, 0 to remove and 2 not upgraded.
+Need to get 9376 B of archives.
+After this operation, 46.1 kB of additional disk space will be used.
+Get:1 http://deb.debian.org/debian bookworm/main amd64 libatomic1 amd64 12.2.0-14+deb12u1 [9376 B]
+Fetched 9376 B in 0s (314 kB/s)
+Selecting previously unselected package libatomic1:amd64.
+(Reading database ... 
+(Reading database ... 75%
+(Reading database ... 85%
+(Reading database ... 90%
+Preparing to unpack .../libatomic1_12.2.0-14+deb12u1_amd64.deb ...
+Unpacking libatomic1:amd64 (12.2.0-14+deb12u1) ...
+
+mkdir -p /app/node_modules/.cache
+130ms
+
+copy package-lock.json, package.json
+23ms
+
+npm ci
+484ms
+npm warn config production Use `--omit=dev` instead.
+npm error code EUSAGE
+npm error A complete log of this run can be found in: /root/.npm/_logs/2026-04-18T12_28_55_414Z-debug-0.log
+ERROR: failed to build: failed to solve: process "npm ci" did not complete successfully: exit code: 1
