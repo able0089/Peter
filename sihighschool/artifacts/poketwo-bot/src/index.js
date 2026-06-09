@@ -15,8 +15,8 @@ const WAKE_COMMAND = "quaxly wake";
 // (Poketwo's verify page is JS-rendered so the key often isn't in raw HTML)
 const POKETWO_HCAPTCHA_SITEKEY = "4c672d35-0701-42b2-88c3-78380b0db560";
 
-// API endpoints for supported captcha services
-const CAPTCHA_ENDPOINTS = {
+// API endpoints for Capsolver-style services (create task + poll)
+const CAPSOLVER_STYLE_ENDPOINTS = {
   capsolver: {
     create: "https://api.capsolver.com/createTask",
     result: "https://api.capsolver.com/getTaskResult",
@@ -28,6 +28,12 @@ const CAPTCHA_ENDPOINTS = {
     taskType: "HCaptchaTaskProxyLess",
   },
 };
+
+// NonceCap uses a completely different API:
+// - Single blocking POST to /v1/solves?wait=90
+// - Bearer token auth in header (not clientKey in body)
+// - Returns P1_ token directly, no polling needed
+const NONECAP_API = "https://api.nonecap.com/v1/solves?wait=90";
 
 const missing = [];
 if (!DISCORD_TOKEN) missing.push("DISCORD_TOKEN");
@@ -178,16 +184,44 @@ async function fetchSiteKey(verifyUrl) {
   return POKETWO_HCAPTCHA_SITEKEY;
 }
 
-async function solveCaptchaWithCapsolver(verifyUrl) {
-  if (!CAPTCHA_API_KEY) {
-    console.log("[CAPTCHA] No CAPTCHA_API_KEY set — skipping auto-solve");
-    return false;
+async function solveWithNoneCap(verifyUrl, siteKey) {
+  console.log("[CAPTCHA] Using NonceCap (single blocking request, up to 90s)...");
+  try {
+    const res = await fetch(NONECAP_API, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${CAPTCHA_API_KEY}`,
+      },
+      body: JSON.stringify({
+        sitekey: siteKey,
+        url: verifyUrl,
+      }),
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      console.error("[CAPTCHA] NonceCap error:", JSON.stringify(data));
+      return null;
+    }
+
+    const token = data.token || data.solution?.token || data.response;
+    if (token) {
+      console.log("[CAPTCHA] NonceCap returned token!");
+      return token;
+    }
+
+    console.error("[CAPTCHA] NonceCap response missing token:", JSON.stringify(data));
+    return null;
+  } catch (err) {
+    console.error("[CAPTCHA] NonceCap request failed:", err.message);
+    return null;
   }
+}
 
-  const endpoint = CAPTCHA_ENDPOINTS[CAPTCHA_SERVICE] || CAPTCHA_ENDPOINTS.capsolver;
-  console.log(`[CAPTCHA] Using service: ${CAPTCHA_SERVICE}`);
-
-  const siteKey = await fetchSiteKey(verifyUrl);
+async function solveWithCapsolverStyle(verifyUrl, siteKey) {
+  const endpoint = CAPSOLVER_STYLE_ENDPOINTS[CAPTCHA_SERVICE] || CAPSOLVER_STYLE_ENDPOINTS.capsolver;
 
   console.log("[CAPTCHA] Submitting hCaptcha task...");
   let taskId;
@@ -207,16 +241,15 @@ async function solveCaptchaWithCapsolver(verifyUrl) {
     const createData = await createRes.json();
     if (createData.errorId !== 0) {
       console.error(`[CAPTCHA] ${CAPTCHA_SERVICE} createTask error:`, createData.errorDescription || JSON.stringify(createData));
-      return false;
+      return null;
     }
     taskId = createData.taskId;
     console.log(`[CAPTCHA] Task created: ${taskId} — polling for solution...`);
   } catch (err) {
     console.error("[CAPTCHA] Failed to create task:", err.message);
-    return false;
+    return null;
   }
 
-  let token = null;
   for (let attempt = 0; attempt < 30; attempt++) {
     await new Promise((r) => setTimeout(r, 4000));
     try {
@@ -228,25 +261,44 @@ async function solveCaptchaWithCapsolver(verifyUrl) {
       const resultData = await resultRes.json();
 
       if (resultData.status === "ready") {
-        token =
+        const token =
           resultData.solution?.gRecaptchaResponse ||
           resultData.solution?.token ||
           resultData.solution?.userAgent;
         console.log("[CAPTCHA] Got solution token!");
-        break;
+        return token || null;
       } else if (resultData.status === "processing") {
         console.log(`[CAPTCHA] Still processing... (attempt ${attempt + 1}/30)`);
       } else {
         console.error("[CAPTCHA] Unexpected status:", JSON.stringify(resultData));
-        return false;
+        return null;
       }
     } catch (err) {
       console.error("[CAPTCHA] Poll error:", err.message);
     }
   }
 
+  console.error("[CAPTCHA] Timed out waiting for solution");
+  return null;
+}
+
+async function solveCaptchaWithCapsolver(verifyUrl) {
+  if (!CAPTCHA_API_KEY) {
+    console.log("[CAPTCHA] No CAPTCHA_API_KEY set — skipping auto-solve");
+    return false;
+  }
+
+  console.log(`[CAPTCHA] Using service: ${CAPTCHA_SERVICE}`);
+  const siteKey = await fetchSiteKey(verifyUrl);
+
+  let token;
+  if (CAPTCHA_SERVICE === "nonecap") {
+    token = await solveWithNoneCap(verifyUrl, siteKey);
+  } else {
+    token = await solveWithCapsolverStyle(verifyUrl, siteKey);
+  }
+
   if (!token) {
-    console.error("[CAPTCHA] Timed out waiting for Capsolver solution");
     return false;
   }
 
