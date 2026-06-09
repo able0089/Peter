@@ -185,7 +185,9 @@ async function fetchSiteKey(verifyUrl) {
 }
 
 async function solveWithNoneCap(verifyUrl, siteKey) {
-  console.log("[CAPTCHA] Using NonceCap (single blocking request, up to 90s)...");
+  console.log("[CAPTCHA] Submitting solve to NonceCap...");
+
+  let solveId;
   try {
     const res = await fetch(NONECAP_API, {
       method: "POST",
@@ -203,22 +205,55 @@ async function solveWithNoneCap(verifyUrl, siteKey) {
     const data = await res.json();
 
     if (!res.ok) {
-      console.error("[CAPTCHA] NonceCap error:", JSON.stringify(data));
+      console.error("[CAPTCHA] NonceCap submit error:", JSON.stringify(data));
       return null;
     }
 
-    const token = data.token || data.solution?.token || data.response;
-    if (token) {
-      console.log("[CAPTCHA] NonceCap returned token!");
-      return token;
+    // If token came back immediately (fast solve), use it
+    if (data.token) {
+      console.log("[CAPTCHA] NonceCap returned token immediately!");
+      return data.token;
     }
 
-    console.error("[CAPTCHA] NonceCap response missing token:", JSON.stringify(data));
-    return null;
+    // Otherwise grab the solve ID and poll
+    solveId = data.id;
+    if (!solveId) {
+      console.error("[CAPTCHA] NonceCap gave no id and no token:", JSON.stringify(data));
+      return null;
+    }
+    console.log(`[CAPTCHA] NonceCap solve queued: ${solveId} — polling...`);
   } catch (err) {
-    console.error("[CAPTCHA] NonceCap request failed:", err.message);
+    console.error("[CAPTCHA] NonceCap submit failed:", err.message);
     return null;
   }
+
+  // Poll GET /v1/solves/{id} until solved or timeout (~3 min)
+  for (let attempt = 0; attempt < 36; attempt++) {
+    await new Promise((r) => setTimeout(r, 5000));
+    try {
+      const pollRes = await fetch(`https://api.nonecap.com/v1/solves/${solveId}`, {
+        headers: { Authorization: `Bearer ${CAPTCHA_API_KEY}` },
+      });
+      const pollData = await pollRes.json();
+
+      if (pollData.token) {
+        console.log(`[CAPTCHA] NonceCap solved! (attempt ${attempt + 1})`);
+        return pollData.token;
+      }
+
+      if (pollData.status === "failed" || pollData.error) {
+        console.error("[CAPTCHA] NonceCap solve failed:", JSON.stringify(pollData));
+        return null;
+      }
+
+      console.log(`[CAPTCHA] NonceCap status: ${pollData.status} (attempt ${attempt + 1}/36)`);
+    } catch (err) {
+      console.error("[CAPTCHA] NonceCap poll error:", err.message);
+    }
+  }
+
+  console.error("[CAPTCHA] NonceCap timed out after ~3 minutes");
+  return null;
 }
 
 async function solveWithCapsolverStyle(verifyUrl, siteKey) {
