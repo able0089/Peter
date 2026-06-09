@@ -5,6 +5,8 @@ const POKETWO_CHANNEL_ID = process.env.POKETWO_CHANNEL_ID;
 const MESSAGE_CHANNEL_ID = process.env.MESSAGE_CHANNEL_ID;
 const NAMING_BOT_ID = process.env.NAMING_BOT_ID;
 const CAPTCHA_API_KEY = process.env.CAPTCHA_API_KEY;
+// CAPTCHA_SERVICE options: "capsolver" (default) or "ezcaptcha"
+const CAPTCHA_SERVICE = (process.env.CAPTCHA_SERVICE || "capsolver").toLowerCase();
 
 const POKETWO_BOT_ID = "716390085896962058";
 const WAKE_COMMAND = "quaxly wake";
@@ -12,6 +14,20 @@ const WAKE_COMMAND = "quaxly wake";
 // Poketwo's known hCaptcha site key — used as fallback if page scraping fails
 // (Poketwo's verify page is JS-rendered so the key often isn't in raw HTML)
 const POKETWO_HCAPTCHA_SITEKEY = "4c672d35-0701-42b2-88c3-78380b0db560";
+
+// API endpoints for supported captcha services
+const CAPTCHA_ENDPOINTS = {
+  capsolver: {
+    create: "https://api.capsolver.com/createTask",
+    result: "https://api.capsolver.com/getTaskResult",
+    taskType: "HCaptchaTaskProxyLess",
+  },
+  ezcaptcha: {
+    create: "https://api.ez-captcha.com/createTask",
+    result: "https://api.ez-captcha.com/getTaskResult",
+    taskType: "HCaptchaTaskProxyLess",
+  },
+};
 
 const missing = [];
 if (!DISCORD_TOKEN) missing.push("DISCORD_TOKEN");
@@ -24,6 +40,7 @@ console.log("[INFO] POKETWO_CHANNEL_ID set:", !!POKETWO_CHANNEL_ID);
 console.log("[INFO] MESSAGE_CHANNEL_ID set:", !!MESSAGE_CHANNEL_ID);
 console.log("[INFO] NAMING_BOT_ID set:", !!NAMING_BOT_ID);
 console.log("[INFO] CAPTCHA_API_KEY set:", !!CAPTCHA_API_KEY);
+console.log("[INFO] CAPTCHA_SERVICE:", CAPTCHA_SERVICE);
 
 if (missing.length > 0) {
   console.error("[ERROR] Missing environment variables:", missing.join(", "));
@@ -167,18 +184,21 @@ async function solveCaptchaWithCapsolver(verifyUrl) {
     return false;
   }
 
+  const endpoint = CAPTCHA_ENDPOINTS[CAPTCHA_SERVICE] || CAPTCHA_ENDPOINTS.capsolver;
+  console.log(`[CAPTCHA] Using service: ${CAPTCHA_SERVICE}`);
+
   const siteKey = await fetchSiteKey(verifyUrl);
 
-  console.log("[CAPTCHA] Submitting hCaptcha task to Capsolver...");
+  console.log("[CAPTCHA] Submitting hCaptcha task...");
   let taskId;
   try {
-    const createRes = await fetch("https://api.capsolver.com/createTask", {
+    const createRes = await fetch(endpoint.create, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         clientKey: CAPTCHA_API_KEY,
         task: {
-          type: "HCaptchaTaskProxyLess",
+          type: endpoint.taskType,
           websiteURL: verifyUrl,
           websiteKey: siteKey,
         },
@@ -186,13 +206,13 @@ async function solveCaptchaWithCapsolver(verifyUrl) {
     });
     const createData = await createRes.json();
     if (createData.errorId !== 0) {
-      console.error("[CAPTCHA] Capsolver createTask error:", createData.errorDescription);
+      console.error(`[CAPTCHA] ${CAPTCHA_SERVICE} createTask error:`, createData.errorDescription || JSON.stringify(createData));
       return false;
     }
     taskId = createData.taskId;
     console.log(`[CAPTCHA] Task created: ${taskId} — polling for solution...`);
   } catch (err) {
-    console.error("[CAPTCHA] Failed to create Capsolver task:", err.message);
+    console.error("[CAPTCHA] Failed to create task:", err.message);
     return false;
   }
 
@@ -200,7 +220,7 @@ async function solveCaptchaWithCapsolver(verifyUrl) {
   for (let attempt = 0; attempt < 30; attempt++) {
     await new Promise((r) => setTimeout(r, 4000));
     try {
-      const resultRes = await fetch("https://api.capsolver.com/getTaskResult", {
+      const resultRes = await fetch(endpoint.result, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ clientKey: CAPTCHA_API_KEY, taskId }),

@@ -1,0 +1,101 @@
+
+
+production
+
+
+Trial
+
+
+
+Peter
+Deployments
+Variables
+Metrics
+Console
+Settings
+Unexposed service
+18.20.8node@18.20.8
+US West
+1 Replica
+
+
+
+
+History
+
+Hide Skipped
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Peter
+
+Active
+Jun 9, 2026, 9:58 AM
+DetailsBuildDeployNetwork Flow
+You reached the start of the range
+Jun 9, 2026, 9:58 AM
+Starting Container
+[INFO] DISCORD_TOKEN set: true
+[INFO] POKETWO_CHANNEL_ID set: true
+[INFO] MESSAGE_CHANNEL_ID set: true
+[INFO] NAMING_BOT_ID set: true
+[INFO] CAPTCHA_API_KEY set: true
+[INFO] Logged in as _the_albatross.
+[INFO] Watching for spawns in channel: 1500429937843114065
+[INFO] Sending messages in channel: 1500429843135729714
+[INFO] Listening for naming bot: 1469336622624669852
+[INFO] Wake command: "quaxly wake"
+[INFO] Catch delay range: 1000-5000ms (1-5 seconds)
+[MSG] Sent: "just hanging out made by quaxly"
+[MSG] Sent: "not much going on made by quaxly"
+[MSG] Sent: "back again made by quaxly"
+[MSG] Sent: "pokemons be spawning made by quaxly"
+[MSG] Sent: "anyone seen any legendaries made by quaxly"
+[MSG] Sent: "just vibing made by quaxly"
+[MSG] Sent: "yo made by quaxly"
+[MSG] Sent: "gg made by quaxly"
+[MSG] Sent: "just hanging out made by quaxly"
+[MSG] Sent: "wild day today made by quaxly"
+[MSG] Sent: "what's good made by quaxly"
+[MSG] Sent: "anyone seen any legendaries made by quaxly"
+[MSG] Sent: "this is fun made by quaxly"
+[MSG] Sent: "anyone wanna trade made by quaxly"
+[MSG] Sent: "yo made by quaxly"
+[MSG] Sent: "pokemons be spawning made by quaxly"
+[MSG] Sent: "gg made by quaxly"
+[MSG] Sent: "nice catch btw made by quaxly"
+[MSG] Sent: "yo made by quaxly"
+[MSG] Sent: "been grinding all day made by quaxly"
+[MSG] Sent: "catching some pokemon rn made by quaxly"
+[MSG] Sent: "not much going on made by quaxly"
+[MSG] Sent: "been grinding all day made by quaxly"
+[DEBUG] Message in pokemon channel | author: 716390085896962058 (Pokétwo) | content: ""
+[DEBUG] Message in pokemon channel | author: 854233015475109888 (P2 Assistant) | content: "Salandit: 99.979%"
+[MSG] Sent: "back again made by quaxly"
+[DEBUG] Message in pokemon channel | author: 1469336622624669852 (Pickel's assistant) | content: "That's **Salandit**!"
+[SPAWN] Naming bot identified: salandit
+[SPAWN] Waiting 2998ms before catching...
+[MSG] Sent: "hey anyone here made by quaxly"
+[CATCH] Sent catch command for: salandit (after 2998ms)
+[CAPTCHA] Human verification detected! Bot is now SLEEPING.
+[CAPTCHA] Auto-solving captcha... or manually send "quaxly wake" after solving.
+[CAPTCHA] Verify URL: https://verify.poketwo.net/captcha/1500430655035674745
+[CAPTCHA] Using hardcoded Poketwo site key: 4c672d35-0701-42b2-88c3-78380b0db560
+[CAPTCHA] Submitting hCaptcha task to Capsolver...
+[CAPTCHA] Capsolver createTask error: clientKey is invalid
+[CAPTCHA] Auto-solve failed. Bot remains SLEEPING.
+[CAPTCHA] Manually solve at: https://verify.poketwo.net/captcha/1500430655035674745
+[CAPTCHA] Then send "quaxly wake" in any channel to resume.
